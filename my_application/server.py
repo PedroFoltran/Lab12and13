@@ -124,7 +124,6 @@ def post_msgs(qid):
 
 @app.route('/queues/<qid>/msgs', methods=['DELETE'])
 def delete_msgs(qid):
-
     """
     Delete messages
     
