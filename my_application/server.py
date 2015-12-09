@@ -21,7 +21,9 @@ def get_conn():
 
 @app.route("/")
 def index():
-    return """
+    resp = json.dumps("Ok.")
+    return Response(response=resp, mimetype="application/json")
+"""
 Available API endpoints:
 """
     
@@ -36,6 +38,7 @@ def get_queues():
     conn = get_conn()
     for q in conn.get_all_queues():
         all.append (q.name)
+     
     resp = json.dumps(all)
     return Response(response=resp, mimetype="application/json")
   
@@ -49,25 +52,29 @@ def post_queues():
     conn = get_conn()
     body = request.get_json(force=True)
     
-    queue_name = 'D12128455' + body['name']	   
+    queue_name = 'D14128455' + body['name']	   
     
  
     q = conn.create_queue (queue_name)
     resp = json.dumps(q.name)
     return Response(response=resp, mimetype="application/json")
 
-@app.route('/queues/<qid>', methods=['DELETE'])
-def delete_queues(qid):
+@app.route('/queues/<name>', methods=['DELETE'])
+def delete_queues(name):
     """
     Delete a queue
     
     curl -X DELETE -H 'Accept: application/json' http://localhost:5000/queues/<queue_name>
     """
     conn = get_conn()
-    q = conn.get_queue(qid)
-    conn.delete_queue (q)
+    q = conn.get_queue(name)
     
-    resp = json.dumps(q.name)
+    if q is None:
+        resp = json.dumps("No queue with this name.")
+    else:
+        conn.delete_queue (q)
+    
+        resp = json.dumps("Queue deleted (" + name + ")")
     return Response(response=resp, mimetype="application/json")
 
 @app.route('/queues/<qid>/msgs', methods=['GET'])
@@ -80,9 +87,15 @@ def get_msgs(qid):
     
     conn = get_conn()
     q = conn.get_queue(qid)
-    rs = q.read()
-    resp = json.dumps (rs.get_body())
-    
+    if q is None:
+        resp = json.dumps("No queue with this name.")
+    else:
+        if q.count() == 0:
+           resp = json.dumps("No messages in this queue")
+        else:
+           rs = q.read()
+           resp = json.dumps (rs.get_body())
+   
     return Response(response=resp, mimetype="application/json")
 
 @app.route('/queues/<qid>/msgs/count', methods=['GET'])
@@ -96,8 +109,10 @@ def get_msgs_count(qid):
     
     conn = get_conn()
     q = conn.get_queue(qid)
-    rs = q.get_messages()
-    resp = json.dumps(len(rs))
+    if q is None:
+        resp = json.dumps("No queue with this name.")
+    else:   
+        resp = json.dumps(q.count())
     return Response(response=resp, mimetype="application/json")
 
 @app.route('/queues/<qid>/msgs', methods=['POST'])
@@ -113,13 +128,16 @@ def post_msgs(qid):
     
     conn = get_conn()
     q = conn.get_queue(qid)
+    if q is None:
+        resp = json.dumps("No queue with this name.")
+    else:
+
+        m = Message()
+        m.set_body(queue_msg)
     
-    m = Message()
-    m.set_body(queue_msg)
+        q.write(m)
     
-    q.write(m)
-    
-    resp = json.dumps(queue_msg)
+        resp = json.dumps(queue_msg)
     return Response(response=resp, mimetype="application/json")
 
 @app.route('/queues/<qid>/msgs', methods=['DELETE'])
@@ -132,16 +150,16 @@ def delete_msgs(qid):
     
     conn = get_conn()
     q = conn.get_queue(qid)
-    
-    all = []
-    
-    while q.count() > 0:
-        rs = q.read()
-        all.append (rs.get_body())
-    
-    resp = json.dumps (all)
-    
-    q.delete_message(rs)
+    if q is None:
+        resp = json.dumps("No queue with this name.")
+    else:
+        if q.count() == 0:
+           resp = json.dumps("No messages in this queue")
+        else:    
+           rs = q.read()
+           q.delete_message(rs)
+           resp = json.dumps ("Message deleted")
+
     return Response(response=resp, mimetype="application/json")
 
 if __name__ == "__main__":
