@@ -1,0 +1,12 @@
+import os
+from flask import Flask, request, redirect, url_for
+from werkzeug import secure_filename
+import boto
+import json
+from subprocess import Popen, PIPE
+from tempfile import mkdtemp
+
+app = Flask(__name__)
+
+def index(): if __name__ == "__main__":
+        return Response(response=json.dumps(boto.Version), mimetype="application/json") app.run(host="0.0.0.0")

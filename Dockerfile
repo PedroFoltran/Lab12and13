@@ -10,6 +10,9 @@ RUN apt-get update
 # Update the sources list
 RUN apt-get -y upgrade
 
+#install boto from pip
+RUN pip install boto
+
 # Copy the application folder inside the container
 ADD /my_application /my_application
 
@@ -18,9 +21,6 @@ RUN pip install -r /my_application/requirements.txt
 
 # Expose listener port
 EXPOSE 5000
-
-# Install boto
-RUN pip install boto
 
 # Set the default directory where CMD will execute
 WORKDIR /my_application
